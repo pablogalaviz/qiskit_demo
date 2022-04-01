@@ -1,42 +1,52 @@
 # Useful additional packages
 import matplotlib.pyplot as plt
-import numpy as np
-from math import pi
-from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, transpile
-from qiskit.tools.visualization import circuit_drawer
-from qiskit.quantum_info import state_fidelity, Pauli, Operator
+from numpy import pi
 from qiskit import Aer
-from qiskit.visualization import plot_histogram
-
+from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, transpile
+from qiskit.quantum_info import Pauli
+from qiskit.visualization import plot_histogram, plot_state_qsphere, plot_state_paulivec
 
 # %%
 
 backend = Aer.get_backend('statevector_simulator')
 
-quantum_registers = QuantumRegister(2, name='q')
+n_bits = 1
+quantum_registers = QuantumRegister(n_bits, name='q')
+classical_registers = ClassicalRegister(n_bits, name='c')
 
-classical_registers = ClassicalRegister(2, name='c')
-
-XX = Operator(Pauli(label='XX'))
+X_gate = Pauli(label='X' * quantum_registers.size)
 
 # Create a Quantum Circuit acting on the q register
 circuit = QuantumCircuit(quantum_registers, classical_registers)
 # In Qiskit we give you access to the general unitary using the 𝑢3 gate
-#circuit.u(pi / 2, pi / 2, pi / 2, q)
-circuit.append(XX, quantum_registers)
+#circuit.h(quantum_registers)
+circuit.rx(pi / 3, quantum_registers)
+# circuit.append(X_gate, quantum_registers)
 circuit.measure(quantum_registers, classical_registers)
 
 circuit.draw('mpl')
 plt.show()
 
 # %%
-job = backend.run(transpile(circuit, backend))
+job = backend.run(transpile(circuit, backend), shots=1024)
 result = job.result()
 
 # %%
-
+count = result.get_counts()
 # Plot a histogram
-plot_histogram(result)
+plot_histogram(count)
 plt.show()
 
-print("\nresult:\n", result)
+print("\ncount:\n", count)
+
+# %%
+
+psi = result.get_statevector(circuit)
+
+plot_state_qsphere(psi)
+
+plt.show()
+
+# %%
+plot_state_paulivec(psi)
+plt.show()
